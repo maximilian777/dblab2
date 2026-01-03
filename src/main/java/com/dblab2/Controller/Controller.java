@@ -3,12 +3,13 @@ package com.dblab2.Controller;
 import javafx.stage.Stage;
 import com.dblab2.Model.*;
 import com.dblab2.View.UserView;
-import java.sql.Connection;
-import java.sql.SQLException;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoClient;
 
 public class Controller {
 
-    private final Connection con;
+    private final MongoDatabase db;
+    private final MongoClient mongoClient;
     private final QL_Interface queryLogic;
     private final BookController bookController;
     private final AuthorController authorController;
@@ -16,9 +17,12 @@ public class Controller {
     private final UserController userController;
     private final UserView userView;
 
-    public Controller(Connection con, Stage primaryStage) {
-        this.con = con;
-        this.queryLogic = new QueryLogic(con);
+    public Controller(MongoDatabase db, MongoClient mongoClient, Stage primaryStage) {
+        this.db = db;
+        this.mongoClient = mongoClient;
+
+        // Initialize your MongoDB-specific query logic
+        this.queryLogic = new QueryLogic(db);
 
         this.bookController = new BookController(queryLogic);
         this.authorController = new AuthorController(queryLogic);
@@ -32,24 +36,22 @@ public class Controller {
                 userController
         );
 
-        primaryStage.setOnCloseRequest(e -> this.shutdown()); // stänger connection vid avlslut av app.
-        startUI(primaryStage); // startar View
+        startUI(primaryStage);
     }
 
     public void startUI(Stage stage) {
         userView.showUserProfile(stage);
     }
 
-    public void shutdown() { // TODO: hanteras det korrekt enligt uppg.beskrivning?
-        System.out.println("Shutting down.");
+    public void shutdown() {
+        System.out.println("Shutting down MongoDB connection...");
         try {
-            if (con != null && !con.isClosed()) {
-                con.close();
-                System.out.println("Connection successfully closed towards database.");
+            if (mongoClient != null) {
+                mongoClient.close();
+                System.out.println("MongoClient successfully closed.");
             }
-        } catch (SQLException e) {
-            System.out.println("Exception thrown whilst trying to close connection: " + e.getMessage());
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Error during MongoDB shutdown: " + e.getMessage());
         }
     }
 }

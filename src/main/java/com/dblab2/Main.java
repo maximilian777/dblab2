@@ -4,32 +4,30 @@ import javafx.application.Platform;
 import com.dblab2.Controller.*;
 import javafx.application.Application;
 import javafx.stage.Stage;
-import java.sql.Connection;
-
+import com.mongodb.client.MongoDatabase;
 
 public class Main extends Application {
 
-    private Connection con;
+    private MongoConnection mongoConnection;
     private Controller controller;
 
     @Override
     public void start(Stage primaryStage) {
         try {
-            JDBC jdbc = new JDBC("dblab1", "dblab1client", "dblab1"); // hårdkodad uppkoppling, denna rättighets-begränsade MySQL-inloggningen är i skapad i MySQL Workbench.
-            con = jdbc.connectToDB();
-            controller = new Controller(con, primaryStage);
+            mongoConnection = new MongoConnection("dbAdmin", "123password", "dblab2");
+            MongoDatabase db = mongoConnection.connect();
+
+            controller = new Controller(db, mongoConnection.getMongoClient(), primaryStage);
 
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Connection to database denied! Please check if login-input is correct.");
-            if (con != null) {
-                try { con.close(); } catch (Exception ce) { // TODO: förbättra hantering?
-
-                }
+            if (mongoConnection != null) {
+                mongoConnection.close();
             }
 
-            System.out.println("Exiting after exception thrown!.");
-            Platform.exit(); // alternativt?
+            System.out.println("Exiting after exception thrown!");
+            Platform.exit();
         }
     }
 
