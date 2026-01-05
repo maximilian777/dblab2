@@ -14,7 +14,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            mongoConnection = new MongoConnection("dbAdmin", "123password", "dblab2");
+            mongoConnection = new MongoConnection("bookwiz_charles", "password", "dblab2");
             MongoDatabase db = mongoConnection.connect();
 
             controller = new Controller(db, mongoConnection.getMongoClient(), primaryStage);

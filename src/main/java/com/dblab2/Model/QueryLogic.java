@@ -160,29 +160,46 @@ public class QueryLogic implements QL_Interface{
 
     @Override
     public void insertToBooks(Book book) throws DatabaseException {
-        MongoCollection<Document> books = db.getCollection("books");
+        MongoCollection<Document> booksColl = db.getCollection("books");
+        MongoCollection<Document> authorsColl = db.getCollection("authors");
+        MongoCollection<Document> genresColl = db.getCollection("genres");
 
         try {
-            Document doc = new Document("_id", book.getISBN())
-                    .append("title", book.getTitle())
-                    .append("pages", book.getPages());
-
-            List<Document> authorDocs = new ArrayList<>();
+            List<Document> fullAuthorDocs = new ArrayList<>();
             for (Author a : book.getAuthors()) {
-                authorDocs.add(new Document("firstName", a.getFirstName())
-                        .append("lastName", a.getLastName()));
-            }
-            doc.append("authors", authorDocs);
+                Document foundAuthor = authorsColl.find(Filters.and(
+                        Filters.eq("firstName", a.getFirstName()),
+                        Filters.eq("lastName", a.getLastName())
+                )).first();
 
-            List<Document> genreDocs = new ArrayList<>();
+                if (foundAuthor == null) {
+                    throw new DatabaseException("Author not found: " + a.getFirstName() + " " + a.getLastName());
+                }
+                fullAuthorDocs.add(foundAuthor);
+            }
+
+            List<Document> fullGenreDocs = new ArrayList<>();
             for (Genre g : book.getGenres()) {
-                genreDocs.add(new Document("name", g.getGenre()));
-            }
-            doc.append("genres", genreDocs);
+                Document foundGenre = genresColl.find(Filters.eq("name", g.getGenre())).first();
 
-            books.insertOne(doc);
+                if (foundGenre == null) {
+                    throw new DatabaseException("Genre not found: " + g.getGenre());
+                }
+                fullGenreDocs.add(foundGenre);
+            }
+
+            Document bookDoc = new Document("_id", book.getISBN())
+                    .append("title", book.getTitle())
+                    .append("pages", book.getPages())
+                    .append("authors", fullAuthorDocs)
+                    .append("genres", fullGenreDocs);
+
+            booksColl.insertOne(bookDoc);
+
+        } catch (DatabaseException de) {
+            throw de;
         } catch (Exception e) {
-            throw new DatabaseException("Could not insert book", e);
+            throw new DatabaseException("Database error during book insertion", e);
         }
     }
 

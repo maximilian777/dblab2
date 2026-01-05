@@ -14,7 +14,7 @@ public class MongoConnection {
     private MongoClient mongoClient;
 
     public MongoConnection(String username, String password, String database) {
-        this.uri = "mongodb://" + username + ":" + password + "@localhost:27017/?authSource=admin";
+        this.uri = "mongodb://" + username + ":" + password + "@localhost:27017/dblab?authSource=dblab2";
         this.dbName = database;
     }
     public MongoDatabase connect() {
