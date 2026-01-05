@@ -160,41 +160,41 @@ public class QueryLogic implements QL_Interface{
 
     @Override
     public void insertToBooks(Book book) throws DatabaseException {
-        MongoCollection<Document> booksColl = db.getCollection("books");
-        MongoCollection<Document> authorsColl = db.getCollection("authors");
-        MongoCollection<Document> genresColl = db.getCollection("genres");
+        MongoCollection<Document> books = db.getCollection("books");
+        MongoCollection<Document> authors = db.getCollection("authors");
+        MongoCollection<Document> genres = db.getCollection("genres");
 
         try {
-            List<Document> fullAuthorDocs = new ArrayList<>();
+            List<Document> authorList = new ArrayList<>();
             for (Author a : book.getAuthors()) {
-                Document foundAuthor = authorsColl.find(Filters.and(
+                Document author = authors.find(Filters.and(
                         Filters.eq("firstName", a.getFirstName()),
                         Filters.eq("lastName", a.getLastName())
                 )).first();
 
-                if (foundAuthor == null) {
+                if (author == null) {
                     throw new DatabaseException("Author not found: " + a.getFirstName() + " " + a.getLastName());
                 }
-                fullAuthorDocs.add(foundAuthor);
+                authorList.add(author);
             }
 
-            List<Document> fullGenreDocs = new ArrayList<>();
+            List<Document> genreList = new ArrayList<>();
             for (Genre g : book.getGenres()) {
-                Document foundGenre = genresColl.find(Filters.eq("name", g.getGenre())).first();
+                Document foundGenre = genres.find(Filters.eq("name", g.getGenre())).first();
 
                 if (foundGenre == null) {
                     throw new DatabaseException("Genre not found: " + g.getGenre());
                 }
-                fullGenreDocs.add(foundGenre);
+                genreList.add(foundGenre);
             }
 
             Document bookDoc = new Document("_id", book.getISBN())
                     .append("title", book.getTitle())
                     .append("pages", book.getPages())
-                    .append("authors", fullAuthorDocs)
-                    .append("genres", fullGenreDocs);
+                    .append("authors", authorList)
+                    .append("genres", genreList);
 
-            booksColl.insertOne(bookDoc);
+            books.insertOne(bookDoc);
 
         } catch (DatabaseException de) {
             throw de;
