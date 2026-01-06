@@ -96,37 +96,14 @@ public class QueryLogic implements QL_Interface{
 
     @Override
     public List<Author> selectAuthorsForBook(String ISBN) throws DatabaseException {
-        MongoCollection<Document> books = db.getCollection("books");
-        Document doc = books.find(Filters.eq("_id", ISBN)).first();
-        List<Author> authors = new ArrayList<>();
-        if (doc != null) {
-            List<Document> authorDocs = doc.getList("authors", Document.class);
-            if (authorDocs != null) {
-                for (Document aDoc : authorDocs) {
-                    Author a = new Author();
-                    a.setFirstName(aDoc.getString("firstName"));
-                    a.setLastName(aDoc.getString("lastName"));
-                    authors.add(a);
-                }
-            }
-        }
-        return authors;
+        List<Author> red = new ArrayList<>();
+        return red;
     }
 
     @Override
     public List<Genre> selectGenresForBook(String ISBN) throws DatabaseException {
-        MongoCollection<Document> books = db.getCollection("books");
-        Document doc = books.find(Filters.eq("_id", ISBN)).first();
-        List<Genre> genres = new ArrayList<>();
-        if (doc != null) {
-            List<Document> genreDocs = doc.getList("genres", Document.class);
-            if (genreDocs != null) {
-                for (Document gDoc : genreDocs) {
-                    genres.add(new Genre(0, gDoc.getString("name")));
-                }
-            }
-        }
-        return genres;
+        List<Genre> red = new ArrayList<>();
+        return red;
     }
 
     private Book mapDocumentToBook(Document doc) {

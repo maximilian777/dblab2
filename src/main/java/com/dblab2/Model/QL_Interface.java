@@ -21,11 +21,4 @@ public interface QL_Interface {
     void deleteBookByISBN(String ISBN) throws DatabaseException;
 
     User login(User user, String password) throws DatabaseException;
-
-    // + deklarera de två hjälpmetoderna
-
-    /* behövs dessa nedan? -- finner ej krav på det i uppgiften men lämpligt? */
-    // List<Genre> getGenresForBook(String isbn) throws DatabaseException;
-    // List<Review> getReviewsForBook(String isbn) throws DatabaseException;
-    // ...
 }
