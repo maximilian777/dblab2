@@ -10,7 +10,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import com.dblab2.Controller.*;
-import com.dblab2.Model.*; // bör det verkligen importeras?
+import com.dblab2.Model.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -336,7 +336,6 @@ public class UserView {
         try {
             String isbnStr = isbn.getText().trim();
             int ratingVal = rating.getValue();
-
             bookController.rateBookAnonymousAsync(isbnStr, ratingVal,
                     () -> {
                         new Alert(Alert.AlertType.INFORMATION, "Rating saved!").showAndWait();

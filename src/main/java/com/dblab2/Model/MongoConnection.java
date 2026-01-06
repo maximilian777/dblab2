@@ -1,12 +1,10 @@
-package com.dblab2;
+package com.dblab2.Model;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
 
 public class MongoConnection {
     private final String uri;
