@@ -5,6 +5,7 @@ import com.dblab2.Model.*;
 import java.util.List;
 import java.util.function.Consumer;
 
+
 public class BookController {
 
     private final QL_Interface queryLogic;
@@ -21,15 +22,15 @@ public class BookController {
         return book;
     }
 
-    public void createBookAsync(String title, List<Author> authors, List<Genre> genres, int pages, String ISBN, Consumer<Book> onSuccess, Consumer<Throwable> onError) {
+    public void createBookAsync(String title, List<Author> authors, List<Genre> genres, int pages, String ISBN, Consumer<Book> onSuccess, Consumer<Exception> onError) {
         new Thread(() -> {
             try {
                 Book book = createBook(title, authors, genres, pages, ISBN);
                 Platform.runLater(() -> onSuccess.accept(book));
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "book-thread").start();
+        }, "bookT").start();
     }
 
     public List<Book> searchBookByTitle(String title) throws DatabaseException {
@@ -64,45 +65,40 @@ public class BookController {
         queryLogic.insertToUserRatings(isbn, username, rating);
     }
 
-    public void removeBookAsync(String isbn, Runnable onSuccess, Consumer<Throwable> onError) {
+    public void removeBookAsync(String isbn, Runnable onSuccess, Consumer<Exception> onError) {
         new Thread(() -> {
             try {
-                queryLogic.deleteBookByISBN(isbn);
+                removeBook(isbn);
                 Platform.runLater(onSuccess);
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "db-remove-thread").start();
+        }, "removeT").start();
     }
 
-    public void rateBookAnonymousAsync(String isbn, int rating, Runnable onSuccess, Consumer<Throwable> onError) {
+    public void rateBookAnonymousAsync(String isbn, int rating, Runnable onSuccess, Consumer<Exception> onError) {
         new Thread(() -> {
             try {
-                queryLogic.insertToRatings(isbn, rating);
+                rateBookAnonymous(isbn, rating);
                 Platform.runLater(onSuccess);
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "db-rate-anon-thread").start();
+        }, "rateT").start();
     }
 
-    public void userRateBookAsync(String isbn, String username, int rating, Runnable onSuccess, Consumer<Throwable> onError) {
+    public void userRateBookAsync(String isbn, String username, int rating, Runnable onSuccess, Consumer<Exception> onError) {
         new Thread(() -> {
             try {
-                queryLogic.insertToUserRatings(isbn, username, rating);
+                userRateBook(isbn, username, rating);
                 Platform.runLater(onSuccess);
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "db-rate-user-thread").start();
+        }, "userRateT").start();
     }
 
-    public void searchAsync(String type,
-                            String input,
-                            String first,
-                            String last,
-                            Consumer<List<Book>> onSuccess,
-                            Consumer<Throwable> onError) {
+    public void searchAsync(String type, String input, String first, String last, Consumer<List<Book>> onSuccess, Consumer<Exception> onError) {
 
         new Thread(() -> {
             try {
@@ -116,10 +112,10 @@ public class BookController {
                     default:       books = List.of();
                 }
                 Platform.runLater(() -> onSuccess.accept(books));
-            } catch (Throwable ex) {
+            } catch (Exception ex) {
                 Platform.runLater(() -> onError.accept(ex));
             }
-        }, "search-thread").start();
+        }, "searchT").start();
 
     }
 
