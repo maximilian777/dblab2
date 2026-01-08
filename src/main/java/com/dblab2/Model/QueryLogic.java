@@ -190,11 +190,20 @@ public class QueryLogic implements QL_Interface{
 
     @Override
     public void insertToUserRatings(String ISBN, String username, int userRating) throws InsertException {
-        MongoCollection<Document> userRatings = db.getCollection("books");
+        MongoCollection<Document> books = db.getCollection("books");
         try {
+            Bson filter = Filters.and(
+                    Filters.eq("_id", ISBN),
+                    Filters.ne("userRatings.username", username)
+            );
             Document userRatingDoc = new Document("username", username).append("rating", userRating);
-            userRatings.updateOne(Filters.eq("_id", ISBN),
-                    Updates.push("userRatings", userRatingDoc));
+            var result = books.updateOne(filter, Updates.push("userRatings", userRatingDoc));
+
+            if (result.getMatchedCount() == 0) {
+                throw new InsertException("User has already rated this book or book not found", "UserRating", ISBN, "Duplicate or Missing ISBN");
+            }
+        } catch (InsertException e) {
+            throw e;
         } catch (Exception e) {
             throw new InsertException("Error adding user rating", "UserRating", ISBN, e);
         }
