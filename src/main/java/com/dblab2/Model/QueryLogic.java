@@ -18,92 +18,89 @@ public class QueryLogic implements QL_Interface{
         this.db = db;
     }
     @Override
-    public List<Book> searchBookByTitle(String title) throws DatabaseException {
+    public List<Book> searchBookByTitle(String title) throws SearchException {
         List<Book> resultBooks = new ArrayList<>();
-        MongoCollection<Document> collection = db.getCollection("books");
-        Bson filter = Filters.regex("title", ".*" + title + ".*", "i");
-
-        try (MongoCursor<Document> cursor = collection.find(filter).iterator()) {
-            while (cursor.hasNext()) {
-                resultBooks.add(mapDocumentToBook(cursor.next()));
+        try {
+            MongoCollection<Document> collection = db.getCollection("books");
+            Bson filter = Filters.regex("title", ".*" + title + ".*", "i");
+            try (MongoCursor<Document> cursor = collection.find(filter).iterator()) {
+                while (cursor.hasNext()) {
+                    resultBooks.add(mapDocumentToBook(cursor.next()));
+                }
             }
         } catch (Exception e) {
-            throw new DatabaseException("Error searching by title", e);
+            throw new SearchException("Database error during title search", "Title", title, e);
         }
         return resultBooks;
     }
 
     @Override
-    public List<Book> searchBookByISBN(String ISBN) throws DatabaseException {
+    public List<Book> searchBookByISBN(String ISBN) throws SearchException {
         List<Book> resultBooks = new ArrayList<>();
-        MongoCollection<Document> books = db.getCollection("books");
-        try (MongoCursor<Document> cursor = books.find(Filters.eq("_id", ISBN)).iterator()) {
-            while (cursor.hasNext()) {
-                resultBooks.add(mapDocumentToBook(cursor.next()));
+        try {
+            MongoCollection<Document> books = db.getCollection("books");
+            try (MongoCursor<Document> cursor = books.find(Filters.eq("_id", ISBN)).iterator()) {
+                while (cursor.hasNext()) {
+                    resultBooks.add(mapDocumentToBook(cursor.next()));
+                }
             }
         } catch (Exception e) {
-            throw new DatabaseException("Error searching by ISBN", e);
+            throw new SearchException("Database error during ISBN search", "ISBN", ISBN, e);
         }
         return resultBooks;
     }
 
     @Override
-    public List<Book> searchBookByAuthor(String firstName, String lastName) throws DatabaseException {
+    public List<Book> searchBookByAuthor(String firstName, String lastName) throws SearchException {
         List<Book> resultBooks = new ArrayList<>();
-        MongoCollection<Document> books = db.getCollection("books");
-        Bson filter = Filters.and(
-                Filters.regex("authors.firstName", ".*" + firstName + ".*", "i"),
-                Filters.regex("authors.lastName", ".*" + lastName + ".*", "i")
-        );
-
-        try (MongoCursor<Document> cursor = books.find(filter).iterator()) {
-            while (cursor.hasNext()) {
-                resultBooks.add(mapDocumentToBook(cursor.next()));
+        String fullName = firstName + " " + lastName;
+        try {
+            MongoCollection<Document> books = db.getCollection("books");
+            Bson filter = Filters.and(
+                    Filters.regex("authors.firstName", ".*" + firstName + ".*", "i"),
+                    Filters.regex("authors.lastName", ".*" + lastName + ".*", "i")
+            );
+            try (MongoCursor<Document> cursor = books.find(filter).iterator()) {
+                while (cursor.hasNext()) {
+                    resultBooks.add(mapDocumentToBook(cursor.next()));
+                }
             }
         } catch (Exception e) {
-            throw new DatabaseException("Error searching by author", e);
+            throw new SearchException("Database error during author search", "Author", fullName, e);
         }
         return resultBooks;
     }
 
     @Override
-    public List<Book> searchBookByRating(int rating) throws DatabaseException {
+    public List<Book> searchBookByRating(int rating) throws SearchException {
         List<Book> resultBooks = new ArrayList<>();
-        MongoCollection<Document> books = db.getCollection("books");
-        try (MongoCursor<Document> cursor = books.find(Filters.gte("averageRating", rating)).iterator()) {
-            while (cursor.hasNext()) {
-                resultBooks.add(mapDocumentToBook(cursor.next()));
+        try {
+            MongoCollection<Document> books = db.getCollection("books");
+            try (MongoCursor<Document> cursor = books.find(Filters.gte("averageRating", rating)).iterator()) {
+                while (cursor.hasNext()) {
+                    resultBooks.add(mapDocumentToBook(cursor.next()));
+                }
             }
         } catch (Exception e) {
-            throw new DatabaseException("Error searching by rating", e);
+            throw new SearchException("Database error during rating search", "Rating", String.valueOf(rating), e);
         }
         return resultBooks;
     }
 
     @Override
-    public List<Book> searchBookByGenre(String genre) throws DatabaseException {
+    public List<Book> searchBookByGenre(String genre) throws SearchException {
         List<Book> resultBooks = new ArrayList<>();
-        MongoCollection<Document> books = db.getCollection("books");
-        try (MongoCursor<Document> cursor = books.find(Filters.eq("genres.name", genre)).iterator()) {
-            while (cursor.hasNext()) {
-                resultBooks.add(mapDocumentToBook(cursor.next()));
+        try {
+            MongoCollection<Document> books = db.getCollection("books");
+            try (MongoCursor<Document> cursor = books.find(Filters.eq("genres.name", genre)).iterator()) {
+                while (cursor.hasNext()) {
+                    resultBooks.add(mapDocumentToBook(cursor.next()));
+                }
             }
         } catch (Exception e) {
-            throw new DatabaseException("Error searching by genre", e);
+            throw new SearchException("Database error during genre search", "Genre", genre, e);
         }
         return resultBooks;
-    }
-
-    @Override
-    public List<Author> selectAuthorsForBook(String ISBN) throws DatabaseException {
-        List<Author> red = new ArrayList<>();
-        return red;
-    }
-
-    @Override
-    public List<Genre> selectGenresForBook(String ISBN) throws DatabaseException {
-        List<Genre> red = new ArrayList<>();
-        return red;
     }
 
     private Book mapDocumentToBook(Document doc) {
@@ -136,7 +133,7 @@ public class QueryLogic implements QL_Interface{
     }
 
     @Override
-    public void insertToBooks(Book book) throws DatabaseException {
+    public void insertToBooks(Book book) throws InsertException {
         MongoCollection<Document> books = db.getCollection("books");
         MongoCollection<Document> authors = db.getCollection("authors");
         MongoCollection<Document> genres = db.getCollection("genres");
@@ -150,7 +147,7 @@ public class QueryLogic implements QL_Interface{
                 )).first();
 
                 if (author == null) {
-                    throw new DatabaseException("Author not found: " + a.getFirstName() + " " + a.getLastName());
+                    throw new InsertException("Author not found", "Book", book.getISBN(), a.getFirstName() + " " + a.getLastName());
                 }
                 authorList.add(author);
             }
@@ -160,7 +157,7 @@ public class QueryLogic implements QL_Interface{
                 Document foundGenre = genres.find(Filters.eq("name", g.getGenre())).first();
 
                 if (foundGenre == null) {
-                    throw new DatabaseException("Genre not found: " + g.getGenre());
+                    throw new InsertException("Genre not found", "Book", book.getISBN(), g.getGenre());
                 }
                 genreList.add(foundGenre);
             }
@@ -173,56 +170,62 @@ public class QueryLogic implements QL_Interface{
 
             books.insertOne(bookDoc);
 
-        } catch (DatabaseException de) {
-            throw de;
+        } catch (InsertException ie) {
+            throw ie;
         } catch (Exception e) {
-            throw new DatabaseException("Database error during book insertion", e);
+            throw new InsertException("Database error during book insertion", "Book", book.getISBN(), e);
         }
     }
 
     @Override
-    public void insertToRatings(String ISBN, int rating) throws DatabaseException {
+    public void insertToRatings(String ISBN, int rating) throws InsertException {
         MongoCollection<Document> ratings = db.getCollection("books");
         try {
             ratings.updateOne(Filters.eq("_id", ISBN),
                     Updates.push("anonymousRatings", rating));
         } catch (Exception e) {
-            throw new DatabaseException("Error adding rating", e);
+            throw new InsertException("Error adding rating", "Rating", ISBN, e);
         }
     }
 
     @Override
-    public void insertToUserRatings(String ISBN, String username, int userRating) throws DatabaseException {
+    public void insertToUserRatings(String ISBN, String username, int userRating) throws InsertException {
         MongoCollection<Document> userRatings = db.getCollection("books");
         try {
             Document userRatingDoc = new Document("username", username).append("rating", userRating);
             userRatings.updateOne(Filters.eq("_id", ISBN),
                     Updates.push("userRatings", userRatingDoc));
         } catch (Exception e) {
-            throw new DatabaseException("Error adding user rating", e);
+            throw new InsertException("Error adding user rating", "UserRating", ISBN, e);
         }
     }
 
     @Override
-    public void insertToReviews(Review review) throws DatabaseException {
+    public void insertToReviews(Review review) throws InsertException {
         MongoCollection<Document> reviews = db.getCollection("books");
+        String isbn = review.getBook().getISBN();
         try {
             Document reviewDoc = new Document("username", review.getUser().getUsername())
                     .append("text", review.getReviewText());
-            reviews.updateOne(Filters.eq("_id", review.getBook().getISBN()),
+            reviews.updateOne(Filters.eq("_id", isbn),
                     Updates.push("reviews", reviewDoc));
         } catch (Exception e) {
-            throw new DatabaseException("Error adding review", e);
+            throw new InsertException("Error adding review", "Review", isbn, e);
         }
     }
 
     @Override
-    public void deleteBookByISBN(String ISBN) throws DatabaseException {
+    public void deleteBookByISBN(String ISBN) throws DeleteException {
         MongoCollection<Document> books = db.getCollection("books");
         try {
-            books.deleteOne(Filters.eq("_id", ISBN));
+            long count = books.deleteOne(Filters.eq("_id", ISBN)).getDeletedCount();
+            if (count == 0) {
+                throw new DeleteException("No book found to delete", ISBN);
+            }
+        } catch (DeleteException de) {
+            throw de;
         } catch (Exception e) {
-            throw new DatabaseException("Error deleting book", e);
+            throw new DeleteException("Error deleting book", ISBN, e);
         }
     }
 
